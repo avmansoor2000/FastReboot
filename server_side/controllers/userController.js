@@ -5,7 +5,7 @@ const User = require('../models/User');
 const Banner = require('../models/Banners')
 const Video = require('../models/Videos')
 const Audio = require('../models/Audio')
-const { generateToken} = require('../utils/userAuth');
+const { generateToken,invalidateToken} = require('../utils/userAuth');
 
 
 //          Post Register
@@ -68,6 +68,7 @@ const userLogin = async (req, res) => {
         res.status(500).json({ message: 'Authentication failed. Please try again later.' });
     }
 };
+
 
 
 //      USER LOGOUT
@@ -147,11 +148,34 @@ const getAudios = async(req,res) => {
 }
 
 
+const profileDetails = async (req, res) => {
+    try {
+      const {userId} = req.query;
+  
+      const user = await User.findById(userId);
+  
+      if (user) {
+        const { name, daysRemaining } = user; 
+        
+        return res.status(200).json({ name, daysRemaining });
+      } else {
+    
+        return res.status(404).json({ error: "User not found" });
+      }
+
+    } catch (error) {
+      
+      return res.status(500).json({ error: error.message });
+    }
+  };
+
+
 module.exports = {
     userLogin,
     userRegister,
     userLogout,
     getBanners,
     getVideos,
-    getAudios
+    getAudios,
+    profileDetails
 };

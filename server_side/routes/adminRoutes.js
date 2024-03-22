@@ -3,6 +3,10 @@ const router = express.Router();
 const adminController = require('../controllers/adminController')
 const {authenticateToken : adminAuth} = require('../utils/adminAuth')
 
+
+//  Admin Auth
+router.post('/admin_auth',adminAuth)
+
 //   Admin Login
 router.post('/',adminController.adminLogin);
 
@@ -10,7 +14,7 @@ router.post('/',adminController.adminLogin);
 router.post('/logout',adminController.adminLogout)
 
 //   Dashboard
-router.get('/dashboard',adminAuth,adminController.getDashboard);
+router.get('/dashboard',adminController.getDashboard);
 
 //   Post Banner
 router.post('/add_banner',adminAuth,adminController.addBanner);
@@ -55,10 +59,16 @@ router.post('/add_user',adminController.addUser);
 router.put('/edit_user',adminController.editUser);
 
 //   Delete User
-router.delete('/edit_user',adminController.deleteUser);
+router.delete('/delete_user',adminController.deleteUser);
 
 //   Get Users
-router.get('/users', adminController.getAllUsers);
+router.get('/get_users', adminController.getAllUsers);
+
+//   Filter Users
+router.get('/get_user/filter',adminController.filterUsers)
+
+//   Search Users
+router.get('/get_user/search',adminController.searchUsers)
 
 //  Add Mentor
 router.post('/add_mentor', adminController.addMentor)
@@ -71,5 +81,7 @@ router.delete('/delete_mentor',adminController.deleteMentor)
 
 //   Get Users
 router.get('/get_mentors', adminController.getAllMentors);
+
+
 
 module.exports = router;

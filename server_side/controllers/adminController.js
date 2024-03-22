@@ -5,10 +5,9 @@ const Banner = require('../models/Banners')
 const Video = require('../models/Videos')
 const Audio = require('../models/Audio')
 const User = require('../models/User')
+const Mentor = require('../models/Mentor')
 const moment = require('moment-timezone');
-const bcrypt = require('bcrypt')
 const {generateToken,invalidateToken} = require('../utils/adminAuth');
-const Mentor = require('../models/Mentor');
 
 //           USER LOGIN
 
@@ -21,7 +20,7 @@ const adminLogin = async (req, res) => {
         const user = await Admin.findOne({ email });
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid email or password' });
+            return res.status(401).json({ message: 'Invalid email or password' });
         }
 
         
@@ -31,7 +30,7 @@ const adminLogin = async (req, res) => {
         const isPasswordValid = await password == user.password
 
         if (!isPasswordValid) {
-            return res.status(400).json({ message: 'Invalid name or password' });
+            return res.status(401).json({ message: 'Invalid name or password' });
         }
 
         // Generate and send JWT token
@@ -59,40 +58,50 @@ const adminLogout = (req,res) => {
         return res.status(500).json({ message: 'Internal Server Error' });
 
     }
-}
+};
         
 
 //      Dashboard
 
 const getDashboard = async(req,res)=> {
+   
     try{
-        const activeUsers = User.findMany({status: "progressing"})
-        const completedUsers = User.findMany({status: "completed"})
-        const totalUsers = activeUsers + completedUsers
-        const Mentors = Mentors
+        const activeUsers = (await User.find({status:'progressing'})) ?. length;
+        
+        const completedUsers = (await User.find({ status: 'completed' })) ?. length;
+        // console.log(activeUsers,'active users');
+        const mentors = (await Mentor.find({})) ?. length;
+        // console.log(Mentors,'aaaaaaaaaaa');
 
-        return res.status(200).json('success')
+        // const totalUsers = (activeUsers + completedUsers);
+
+
+        return res.status(200).json({
+            succes: true,
+            activeUsers: activeUsers || 0,
+            completedUsers: completedUsers || 0,
+            // totalUsers: totalUsers || 0,
+            mentors: mentors || 0
+        })
 
     }catch(error){
 
         return res.status(500).json({message: "error"})
 
     }
-}
-
+};
 
 //      ADD BANNER
 
 const addBanner = async(req,res) => {
-    const {img_path,heading,description} = req.body
+    const {heading,description} = req.body
 
-    if(!img_path || !heading || !description){
+    if( !heading || !description){
         return res.status(400).json({succes: false,message: 'Fill all the fields.'})
     }
     try{
 
         const newBanner = new Banner ({
-            img_path,
             heading,
             description
         })
@@ -105,7 +114,7 @@ const addBanner = async(req,res) => {
    console.error("Error while adding banner:", error);
     res.status(500).json({ error: "Error while adding banner" });
 }
-}
+};
 
 
 //      EDIT BANNER
@@ -114,9 +123,9 @@ const editBanner = async (req, res) => {
     
     const bannerId = req.query._id
     console.log(bannerId);
-    const { img_path, heading, description } = req.body;
+    const {heading, description } = req.body;
 
-    if (!img_path || !heading || !description) {
+    if ( !heading || !description) {
         return res.status(400).json({ success: false, message: 'Fill all the fields.' });
     }
 
@@ -129,7 +138,6 @@ const editBanner = async (req, res) => {
         }
 
         // Update the banner details
-        banner.img_path = img_path;
         banner.heading = heading;
         banner.description = description;
 
@@ -167,7 +175,7 @@ const deleteBanner = async (req, res) => {
         console.error("Error while deleting banner:", error);
         res.status(500).json({ success: false, error: "Error while deleting banner" });
     }
-}
+};
 
 
 //      GET ALL BANNERS
@@ -212,7 +220,7 @@ const addVideo = async(req,res) => {
    console.error("Error while adding video:", error);
     res.status(500).json({ error: "Error while adding video" });
 }
-}
+};
 
 
 //      EDIT VIDEO
@@ -274,7 +282,7 @@ const deleteVideo = async (req, res) => {
         console.error("Error while deleting video:", error);
         res.status(500).json({ success: false, error: "Error while deleting video" });
     }
-}
+};
 
 
 //      GET ALL Videos
@@ -321,7 +329,7 @@ const addAudio = async(req,res) => {
    console.error("Error while adding audio:", error);
     res.status(500).json({ error: "Error while adding audio" });
 }
-}
+};
 
 
 //      EDIT AUDIO
@@ -383,7 +391,7 @@ const deleteAudio = async (req, res) => {
         console.error("Error while deleting audio:", error);
         res.status(500).json({ success: false, error: "Error while deleting audio" });
     }
-}
+};
 
 
 //      GET ALL Audios
@@ -407,29 +415,31 @@ const getAllAudios = async (req, res) => {
 //      ADD USER
 
 const addUser = async(req,res) =>{
-    const {name,number,email,password,duration} = req.body
+    const {name,number,email,password,duration,payment,mentor} = req.body
     console.log(req.body);
     try{
-        if(!name || !number || !email || !password || !duration){
+
+        if(!name || !number || !email || !password || !payment || !duration){
             return res.status(404).json('Fill all the fields')
         }
-        console.log('hhhhhhhhhhhhhhhhhhhhhh');
 
         const user = await User.findOne({email});
         console.log(user,'ddddddddddddddddddd');
 
         if(!user){
-            // const currentDateIST = moment().tz('Asia/Kolkata');
-            // const expirationDateIST = currentDateIST.clone().add(duration, 'days');
-            const currentDateIST = moment().tz('Asia/Kolkata').startOf('day'); // Set time to 00:00:00
-            const expirationDateIST = currentDateIST.clone().add(duration, 'days').startOf('day'); // Set time to 00:00:00
+
+            const currentDateIST = moment().tz('Asia/Kolkata').startOf('day');
+            const expirationDateIST = currentDateIST.clone().add(duration, 'days').startOf('day'); 
             const newUser = new User({
                 name,
                 number,
                 email,
                 password,
+                payment,
+                duration,
+                mentor,
                 daysRemaining : duration,
-                accessExpiresAt: expirationDateIST
+                accessExpiresAt: expirationDateIST,
             })
             console.log(newUser,'ffffffffffffff');
             await newUser.save();
@@ -448,13 +458,15 @@ const addUser = async(req,res) =>{
         return res.status(500).json('Error while adding user')
 
     }
-}
+};
 
 
 //      EDIT USER
 const editUser = async (req, res) => {
     try {
-        const { userId } = req.params; // Assuming userId is passed as a parameter
+        
+        const { userId } = req.query; // Assuming userId is passed as a parameter
+        console.log('hhhhhhhhhhhh',userId);
         const { name, number, email, password, duration } = req.body;
 
         if (!name && !number && !email && !password && !duration) {
@@ -484,8 +496,10 @@ const editUser = async (req, res) => {
         }
 
         if (duration) {
-            // Assuming daysRemaining represents the remaining duration of access
+    
             user.daysRemaining += duration;
+            user.duration += duration
+
             // Update access expiration date based on new duration
             const currentDateIST = moment().tz('Asia/Kolkata').startOf('day');
             const expirationDateIST = currentDateIST.clone().add(user.daysRemaining, 'days').startOf('day');
@@ -507,16 +521,16 @@ const editUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
     try {
-        const { userId } = req.params; // Assuming userId is passed as a parameter
+        const { userId } = req.query; 
 
-        const user = await User.findById(userId); // Assuming you have a User model and you're using Mongoose
+        const user = await User.findById(userId); 
 
         if (!user) {
             return res.status(404).json('User not found');
         }
 
         // Perform deletion of the user
-        await user.remove();
+        await User.findByIdAndDelete(userId);
 
         return res.status(200).json('User deleted successfully');
 
@@ -545,16 +559,54 @@ const getAllUsers = async (req, res) => {
 };
 
 
+//      Filter Users using Status
+
+const filterUsers = async (req, res) => {
+    try {
+        const { status } = req.query;
+        // console.log(status);
+        const filteredUsers = await User.find({ status });
+        
+        if (filteredUsers.length === 0) {
+            return res.status(404).json({ message: 'No users found with the provided status' });
+        }
+
+        return res.status(200).json(filteredUsers);
+    } catch (error) {
+        return res.status(500).json(error);
+    }
+};
+
+
+//      Search Users using name
+
+const searchUsers = async (req, res) => {
+    try {
+        const { query } = req.query;
+        const searchResults = await User.find({ name: { $regex: new RegExp(query, "i") } });
+
+        if (searchResults.length === 0) {
+            return res.status(404).json({ message: 'No users found matching the search query' });
+        }
+
+        return res.status(200).json(searchResults);
+    } catch (error) {
+        return res.status(500).json(error);
+    }
+};
+
+
 //      Add Mentor
 
 const addMentor = async(req,res) => {
-    const {name,specification,phone_no} = req.body
+    const {name,specialization,phone_no,email} = req.body
     try{
 
     const newMentor = new Mentor({
         name,
-        specification,
-        phone_no
+        specialization,
+        phone_no,
+        email
     })
 
     await newMentor.save()
@@ -564,22 +616,22 @@ const addMentor = async(req,res) => {
     return res.status(500).json('Error while Adding Mentor')
 }
 
-}
+};
 
 
 //      EDIT MENTOR
 
 const editMentor = async(req,res) => {
-    const MentorID = req.params
-    const {name,specialization,phone_no} = req.body
+    const {mentorId} = req.query
+    const {name,specialization,phone_no,email} = req.body
 
-    if (!name || !specialization || !phone_no) {
+    if (!name || !specialization || !phone_no || !email) {
         return res.status(400).json({ success: false, message: 'Fill all the fields.' });
     }
 
     try {
 
-        const mentor = await Mentor.findById(MentorID);
+        const mentor = await Mentor.findById(mentorId);
 
         if (!mentor) {
             return res.status(404).json({ success: false, message: 'mentor not found.' });
@@ -589,6 +641,7 @@ const editMentor = async(req,res) => {
         mentor.name = name;
         mentor.specialization = specialization;
         mentor.phone_no = phone_no;
+        mentor.email = email;
 
         // Save the updated mentor to the database
         await mentor.save();
@@ -598,14 +651,15 @@ const editMentor = async(req,res) => {
         console.error("Error while editing mentor:", error);
         return res.status(500).json({ success: false, error: "Error while editing mentor." });
     }
-}
+};
 
 
 //      DELETE MENTOR
 
 const deleteMentor = async (req, res) => {
     console.log('Deleting mentor...');
-    const mentorId = req.query._id;
+    const {mentorId} = req.query;
+    console.log(mentorId);
     try {
 
         // Check if mentor exists
@@ -624,10 +678,10 @@ const deleteMentor = async (req, res) => {
         console.error("Error while deleting mentor:", error);
         res.status(500).json({ success: false, error: "Error while deleting mentor" });
     }
-}
+};
 
 
-//      GET ALL Audios
+//      GET ALL Mentors
 
 const getAllMentors = async (req, res) => {
     try {
@@ -636,6 +690,7 @@ const getAllMentors = async (req, res) => {
            if (mentors.length === 0) {
             return res.status(404).json({ message: 'No mentors found' });
         }
+        console.log(mentors,'ddddddddddddddddd');
 
         return res.status(200).json(mentors);
     } catch (error) {
@@ -651,6 +706,6 @@ module.exports = {
     addBanner,editBanner,deleteBanner,getAllBanners,
     addVideo,editVideo,deleteVideo,getAllVideos,
     addAudio,editAudio,deleteAudio,getAllAudios,
-    addUser,editUser,deleteUser,getAllUsers,
+    addUser,editUser,deleteUser,getAllUsers,filterUsers,searchUsers,
     addMentor,editMentor,deleteMentor,getAllMentors
   };

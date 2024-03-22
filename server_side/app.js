@@ -1,12 +1,12 @@
 const express = require('express');
-const cors = require('cors')
-const userRoutes = require('./routes/userRoutes')
-const adminRoutes = require('./routes/adminRoutes')
+const cors = require('cors');
+const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const app = express();
-const connectDB = require('./config/db')
-const {startCronJob} = require('./services/cronJob')
+const connectDB = require('./config/db');
+const {startCronJob} = require('./services/cronJob');
 require('dotenv').config
-const port = process.env.port
+const port = process.env.port;
 
 // Database Connection
 connectDB()
@@ -16,11 +16,6 @@ startCronJob();
 
 // Middleware to parse JSON-encoded bodies
 app.use(express.json());
-
-// Initialize cron job
-// cronJob.start();
-
-// app.use(cors())
 
 // Enable CORS for specific origins
 app.use(cors({
