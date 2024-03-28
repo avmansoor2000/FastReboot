@@ -29,7 +29,7 @@ router.delete('/delete_banner',adminAuth,adminController.deleteBanner);
 router.get('/get_banners',adminController.getAllBanners)
 
 //   Add Video
-router.post('/add_video',adminAuth,adminController.addVideo);
+router.post('/add_video',adminController.addVideo);
 
 //   Edit Video
 router.put('/edit_video',adminController.editVideo);
@@ -81,6 +81,9 @@ router.delete('/delete_mentor',adminController.deleteMentor)
 
 //   Get Users
 router.get('/get_mentors', adminController.getAllMentors);
+
+//   Get Sales Report
+router.get('/get_sales_report',adminController.getSalesReport);
 
 
 

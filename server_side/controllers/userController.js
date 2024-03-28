@@ -25,14 +25,14 @@ const userRegister = async(req,res)=>{
         phone_no
     })
     await newUser.save()
-    console.log("success");
+    // console.log("success");
 
 
-    return res.status(200).json({success: true, message: 'success'})
+    return res.status(200).json({success: true, message: 'successfuly registred'})
 }
 }catch (error){
     console.error("Error :", error);
-    res.status(500).json({ error: "Error" });
+    return res.status(500).json({ success: false, error: "Internal server error." });
 
 }
 }
@@ -47,7 +47,7 @@ const userLogin = async (req, res) => {
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid email or password' });
+            return res.status(400).json({success:false, message: 'Invalid email or password' });
         }
 
         // Check if the password is correct
@@ -55,17 +55,17 @@ const userLogin = async (req, res) => {
         const isPasswordValid = await password == user.password;
 
         if (!isPasswordValid) {
-            return res.status(400).json({ message: 'Invalid name or password' });
+            return res.status(400).json({success:false, message: 'Invalid email or password' });
         }
 
         // Generate and send JWT token
         const token = generateToken(user._id);
-        console.log(token);
-        res.json({ token });
+        // console.log(token);
+        res.json({success:true, token });
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Authentication failed. Please try again later.' });
+        res.status(500).json({success:false, message: 'Authentication failed. Please try again later.' });
     }
 };
 
@@ -78,7 +78,7 @@ const userLogout = (req,res) => {
 
         invalidateToken(req,res);
         
-        return res.status(200).json({ message: 'Logout successful' });
+        return res.status(200).json({success:true, message: 'Logout successful' });
 
     }catch(error){
         console.error('Error during logout:', error);
@@ -98,11 +98,12 @@ const getBanners = async (req, res) => {
         console.log(banners);
         
         if (banners.length > 0) {
-            return res.status(200).json({ success: true, banners: banners });
+            return res.status(200).json({ success: true, data: banners });
         } else {
             return res.status(404).json({ success: false, message: 'No banners found' });
         }
     } catch (error) {
+        console.error('Error fetching banners:', error);
         return res.status(500).json({ success: false, error: error.message });
     }
 };
@@ -114,10 +115,13 @@ const getVideos = async(req,res) => {
     try{
         const videos = await Video.find({})
         console.log(videos);
-        if(videos.length > 0){
-            return res.status(200).json({success: true, videos: videos});
-        }else{
+        if(videos.length < 0){
+
             return res.status(404).json({success: false, message: 'No videos found'})
+        }else{
+
+            return res.status(200).json({success: true, data: videos});
+            
         }
 
 
@@ -135,7 +139,7 @@ const getAudios = async(req,res) => {
         const audios = await Audio.find({})
 
         if(audios.length > 0){
-            return res.status(200).json({success: true, audios: audios});
+            return res.status(200).json({success: true, data: audios});
         }else{
             return res.status(404).json({success: false, message: 'No audios found'})
         }
@@ -157,7 +161,7 @@ const profileDetails = async (req, res) => {
       if (user) {
         const { name, daysRemaining } = user; 
         
-        return res.status(200).json({ name, daysRemaining });
+        return res.status(200).json({success:true, name, daysRemaining });
       } else {
     
         return res.status(404).json({ error: "User not found" });

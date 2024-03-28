@@ -20,7 +20,7 @@ const adminLogin = async (req, res) => {
         const user = await Admin.findOne({ email });
 
         if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(401).json({success:false, message: 'Invalid email or password' });
         }
 
         
@@ -30,16 +30,16 @@ const adminLogin = async (req, res) => {
         const isPasswordValid = await password == user.password
 
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid name or password' });
+            return res.status(401).json({success:true, message: 'Invalid name or password' });
         }
 
         // Generate and send JWT token
         const token = generateToken(user._id);
-        res.json({ token });
+        return res.status(200).json({success:true, message: 'Login successful', token });
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        res.status(500).json({success:false, message: 'Server Error' });
     }
 };
 
@@ -51,11 +51,11 @@ const adminLogout = (req,res) => {
 
         invalidateToken(req,res);
         
-        return res.status(200).json({ message: 'Logout successful' });
+        return res.status(200).json({success:true, message: 'Logout successful' });
 
     }catch(error){
         console.error('Error during logout:', error);
-        return res.status(500).json({ message: 'Internal Server Error' });
+        return res.status(500).json({success:false, message: 'Internal Server Error' });
 
     }
 };
@@ -66,18 +66,12 @@ const adminLogout = (req,res) => {
 const getDashboard = async(req,res)=> {
    
     try{
-        const activeUsers = (await User.find({status:'progressing'})) ?. length;
-        
+        const activeUsers = (await User.find({status:'progressing'})) ?. length ;
         const completedUsers = (await User.find({ status: 'completed' })) ?. length;
-        // console.log(activeUsers,'active users');
         const mentors = (await Mentor.find({})) ?. length;
-        // console.log(Mentors,'aaaaaaaaaaa');
-
-        // const totalUsers = (activeUsers + completedUsers);
-
 
         return res.status(200).json({
-            succes: true,
+            success: true,
             activeUsers: activeUsers || 0,
             completedUsers: completedUsers || 0,
             // totalUsers: totalUsers || 0,
@@ -86,7 +80,8 @@ const getDashboard = async(req,res)=> {
 
     }catch(error){
 
-        return res.status(500).json({message: "error"})
+        console.error('Error while fetching dashboard statistics:', error);
+        return res.status(500).json({ success: false, error: 'Failed to fetch dashboard statistics. Please try again later.' });
 
     }
 };
@@ -97,22 +92,22 @@ const addBanner = async(req,res) => {
     const {heading,description} = req.body
 
     if( !heading || !description){
-        return res.status(400).json({succes: false,message: 'Fill all the fields.'})
+        return res.status(400).json({success: false,message: 'Fill all the fields.'})
     }
     try{
 
-        const newBanner = new Banner ({
+        const bannerDocument = new Banner ({
             heading,
             description
         })
-        await newBanner.save()
+        await bannerDocument.save()
         
-        return res.status(200).json({succes: true, message: 'success'})
+        return res.status(200).json({success: true, message: 'Banner added successfully'})
 
 
 }catch(error){
    console.error("Error while adding banner:", error);
-    res.status(500).json({ error: "Error while adding banner" });
+    return res.status(500).json({ error: "Error while adding banner" });
 }
 };
 
@@ -155,7 +150,7 @@ const editBanner = async (req, res) => {
 //      DELETE BANNER
 
 const deleteBanner = async (req, res) => {
-    console.log('Deleting banner...');
+    // console.log('Deleting banner...');
     const bannerId = req.query._id;
     try {
 
@@ -168,7 +163,7 @@ const deleteBanner = async (req, res) => {
         // Delete banner
         await Banner.findByIdAndDelete(bannerId);
 
-        console.log('Banner deleted:', bannerId);
+        // console.log('Banner deleted:', bannerId);
         return res.status(200).json({ success: true, message: 'Banner deleted successfully.' });
 
     } catch (error) {
@@ -188,7 +183,7 @@ const getAllBanners = async (req, res) => {
             return res.status(404).json({ message: 'No banners found' });
         }
 
-        return res.status(200).json(banners);
+        return res.status(200).json({success:false,message: 'Banners fetched successfully', data:banners});
     } catch (error) {
         console.error('Error while fetching banners:', error);
         return res.status(500).json('Error while fetching banners');
@@ -202,23 +197,23 @@ const addVideo = async(req,res) => {
     const {video_path,heading,description} = req.body
 
     if(!video_path || !heading || !description){
-        return res.status(400).json({succes: false,message: 'Fill all the fields.'})
+        return res.status(400).json({success: false,message: 'Fill all the fields.'})
     }
     try{
 
-        const newVideo = new Video ({
+        const videoDocument = new Video ({
             video_path,
             heading,
             description
         })
-        await newVideo.save()
+        await videoDocument.save()
         
-        return res.status(200).json({succes: true, message: 'success'})
+        return res.status(200).json({success: true, message: 'Video added successfully'})
 
 
 }catch(error){
    console.error("Error while adding video:", error);
-    res.status(500).json({ error: "Error while adding video" });
+    return res.status(500).json({success: false, error: "Error while adding video" });
 }
 };
 
@@ -262,21 +257,21 @@ const editVideo = async (req, res) => {
 //      DELETE VIDEO
 
 const deleteVideo = async (req, res) => {
-    console.log('Deleting video...');
+    // console.log('Deleting video...');
     const videoId = req.query._id;
     try {
 
         // Check if video exists
         const video = await Video.findById(videoId);
         if (!video) {
-            return res.status(404).json({ success: false, message: 'video not found.' });
+            return res.status(404).json({ success: false, message: 'video not found' });
         }
 
         // Delete video
         await Video.findByIdAndDelete(videoId);
 
-        console.log('video deleted:', videoId);
-        return res.status(200).json({ success: true, message: 'video deleted successfully.' });
+        // console.log('video deleted:', videoId);
+        return res.status(200).json({ success: true, message: 'video deleted successfully' });
 
     } catch (error) {
         console.error("Error while deleting video:", error);
@@ -292,13 +287,13 @@ const getAllVideos = async (req, res) => {
         const videos = await Video.find(); 
 
            if (videos.length === 0) {
-            return res.status(404).json({ message: 'No videos found' });
+            return res.status(404).json({success:false, message: 'No videos found' });
         }
 
-        return res.status(200).json(videos);
+        return res.status(200).json({success:true,message: 'Videos fetched successfully',data:videos});
     } catch (error) {
         console.error('Error while fetching videos:', error);
-        return res.status(500).json('Error while fetching videos');
+        return res.status(500).json({success:false, error:'Error while fetching videos'});
     }
 };
 
@@ -311,23 +306,23 @@ const addAudio = async(req,res) => {
     const {audio_path,heading,description} = req.body
 
     if(!audio_path || !heading || !description){
-        return res.status(400).json({succes: false,message: 'Fill all the fields.'})
+        return res.status(400).json({success: false,message: 'Fill all the fields.'})
     }
     try{
 
-        const newAudio = new Audio ({
+        const audioDocument = new Audio ({
             audio_path,
             heading,
             description
         })
-        await newAudio.save()
+        await audioDocument.save()
         
-        return res.status(200).json({succes: true, message: 'success'})
+        return res.status(200).json({success: true, message: 'Audio added successfully'})
 
 
 }catch(error){
    console.error("Error while adding audio:", error);
-    res.status(500).json({ error: "Error while adding audio" });
+    return res.status(500).json({success:false, error: "Failed to add audio. Please try again later." });
 }
 };
 
@@ -363,7 +358,7 @@ const editAudio = async (req, res) => {
         return res.status(200).json({ success: true, message: 'audio updated successfully.' });
     } catch (error) {
         console.error("Error while editing audio:", error);
-        return res.status(500).json({ success: false, error: "Error while editing audio." });
+        return res.status(500).json({ success: false, error: "Failed to edit audio. Please try again later." });
     }
 };
 
@@ -371,7 +366,7 @@ const editAudio = async (req, res) => {
 //      DELETE AUDIO
 
 const deleteAudio = async (req, res) => {
-    console.log('Deleting audio...');
+    // console.log('Deleting audio...');
     const audioId = req.query._id;
     try {
 
@@ -401,13 +396,13 @@ const getAllAudios = async (req, res) => {
         const audios = await Audio.find(); 
 
            if (audios.length === 0) {
-            return res.status(404).json({ message: 'No audios found' });
+            return res.status(404).json({success:false, message: 'No audios found' });
         }
 
-        return res.status(200).json(audios);
+        return res.status(200).json({success:true,message: 'Audios fetched successfully', data: audios});
     } catch (error) {
         console.error('Error while fetching audios:', error);
-        return res.status(500).json('Error while fetching audios');
+        return res.status(500).json({success:false, error: 'Failed to fetch audios. Please try again later.'});
     }
 };
 
@@ -416,15 +411,15 @@ const getAllAudios = async (req, res) => {
 
 const addUser = async(req,res) =>{
     const {name,number,email,password,duration,payment,mentor} = req.body
-    console.log(req.body);
+    // console.log(req.body);
     try{
 
         if(!name || !number || !email || !password || !payment || !duration){
-            return res.status(404).json('Fill all the fields')
+            return res.status(404).json({success:false, message:'Fill all the fields'})
         }
 
         const user = await User.findOne({email});
-        console.log(user,'ddddddddddddddddddd');
+        // console.log(user,'ddddddddddddddddddd');
 
         if(!user){
 
@@ -441,21 +436,22 @@ const addUser = async(req,res) =>{
                 daysRemaining : duration,
                 accessExpiresAt: expirationDateIST,
             })
-            console.log(newUser,'ffffffffffffff');
+            // console.log(newUser,'ffffffffffffff');
             await newUser.save();
 
-            return res.status(200).json('successfuly registred')
+            return res.status(200).json({success:true, message: 'successfuly registred'})
 
         }else{
             user.daysRemaining += duration
             await user.save();
 
-            return res.status(200).json('User already exists, days remaining updated');
+            return res.status(200).json({success: true, message:'User already exists, days remaining updated'});
         }
 
     }catch(error){
 
-        return res.status(500).json('Error while adding user')
+        console.error('Error while adding user:', error);
+        return res.status(500).json({ success: false, message: 'Failed to add user. Please try again later.' });
 
     }
 };
@@ -466,17 +462,17 @@ const editUser = async (req, res) => {
     try {
         
         const { userId } = req.query; // Assuming userId is passed as a parameter
-        console.log('hhhhhhhhhhhh',userId);
+        // console.log('hhhhhhhhhhhh',userId);
         const { name, number, email, password, duration } = req.body;
 
         if (!name && !number && !email && !password && !duration) {
-            return res.status(400).json('No fields to update');
+            return res.status(400).json({success:false, message:'No fields to update'});
         }
 
         const user = await User.findById(userId); // Assuming you have a User model and you're using Mongoose
 
         if (!user) {
-            return res.status(404).json('User not found');
+            return res.status(404).json({success:false, message:'User not found'});
         }
 
         if (name) {
@@ -508,11 +504,11 @@ const editUser = async (req, res) => {
 
         await user.save();
 
-        return res.status(200).json('User updated successfully');
+        return res.status(200).json({success:false, message:'User updated successfully'});
 
     } catch (error) {
-        console.error(error);
-        return res.status(500).json('Error while updating user');
+        console.error('Error while adding user:', error);
+        return res.status(500).json({ success: false, message: 'Failed to edit user details. Please try again later.' });
     }
 };
 
@@ -526,17 +522,17 @@ const deleteUser = async (req, res) => {
         const user = await User.findById(userId); 
 
         if (!user) {
-            return res.status(404).json('User not found');
+            return res.status(404).json({success:false, message:'User not found'});
         }
 
         // Perform deletion of the user
         await User.findByIdAndDelete(userId);
 
-        return res.status(200).json('User deleted successfully');
+        return res.status(200).json({success:true, message:'User deleted successfully'});
 
     } catch (error) {
         console.error(error);
-        return res.status(500).json('Error while deleting user');
+        return res.status(500).json({success:false, message:'Error while deleting user'});
     }
 };
 
@@ -548,13 +544,13 @@ const getAllUsers = async (req, res) => {
         const users = await User.find(); 
 
            if (users.length === 0) {
-            return res.status(404).json({ message: 'No users found' });
+            return res.status(404).json({success:false, message: 'No users found' });
         }
 
-        return res.status(200).json(users);
+        return res.status(200).json({success:true, message: 'Users fetched successfully',data:users});
     } catch (error) {
         console.error('Error while fetching users:', error);
-        return res.status(500).json('Error while fetching users');
+        return res.status(500).json({ success: false, message: 'Failed to fetch users. Please try again later.' });
     }
 };
 
@@ -568,12 +564,14 @@ const filterUsers = async (req, res) => {
         const filteredUsers = await User.find({ status });
         
         if (filteredUsers.length === 0) {
-            return res.status(404).json({ message: 'No users found with the provided status' });
+            return res.status(404).json({success:false, message: 'No users found with the provided status' });
         }
 
-        return res.status(200).json(filteredUsers);
+        return res.status(200).json({ success: true, message: 'Users filtered successfully', data: filteredUsers });
     } catch (error) {
-        return res.status(500).json(error);
+
+        console.error('Error while filtering users:', error);
+        return res.status(500).json({ success: false, message: 'Failed to filter users. Please try again later.' });
     }
 };
 
@@ -589,9 +587,10 @@ const searchUsers = async (req, res) => {
             return res.status(404).json({ message: 'No users found matching the search query' });
         }
 
-        return res.status(200).json(searchResults);
+        return res.status(200).json({success:true,message:'Users found matching the search query', data:searchResults});
     } catch (error) {
-        return res.status(500).json(error);
+        console.error('Error while searching users:', error);
+        return res.status(500).json({ success: false, message: 'Failed to search users. Please try again later.' });
     }
 };
 
@@ -611,9 +610,10 @@ const addMentor = async(req,res) => {
 
     await newMentor.save()
 
-    return res.status(200).json('success')
+    return res.status(200).json({ success: true, message: 'Mentor added successfully' })
 }catch(error){
-    return res.status(500).json('Error while Adding Mentor')
+    console.error('Error while adding mentor:', error);
+        return res.status(500).json({ success: false, message: 'Error while adding mentor. Please try again later.' });
 }
 
 };
@@ -634,7 +634,7 @@ const editMentor = async(req,res) => {
         const mentor = await Mentor.findById(mentorId);
 
         if (!mentor) {
-            return res.status(404).json({ success: false, message: 'mentor not found.' });
+            return res.status(404).json({ success: false, message: 'Mentor not found.' });
         }
 
         // Update the mentor details
@@ -646,7 +646,7 @@ const editMentor = async(req,res) => {
         // Save the updated mentor to the database
         await mentor.save();
 
-        return res.status(200).json({ success: true, message: 'mentor details updated successfully.' });
+        return res.status(200).json({ success: true, message: 'Mentor details updated successfully.' });
     } catch (error) {
         console.error("Error while editing mentor:", error);
         return res.status(500).json({ success: false, error: "Error while editing mentor." });
@@ -665,14 +665,14 @@ const deleteMentor = async (req, res) => {
         // Check if mentor exists
         const mentor = await Mentor.findById(mentorId);
         if (!mentor) {
-            return res.status(404).json({ success: false, message: 'mentor not found.' });
+            return res.status(404).json({ success: false, message: 'Mentor not found.' });
         }
 
         // Delete mentor
         await Mentor.findByIdAndDelete(mentorId);
 
-        console.log('mentor deleted:', mentorId);
-        return res.status(200).json({ success: true, message: 'mentor deleted successfully.' });
+        // console.log('mentor deleted:', mentorId);
+        return res.status(200).json({ success: true, message: 'Mentor deleted successfully.' });
 
     } catch (error) {
         console.error("Error while deleting mentor:", error);
@@ -688,16 +688,38 @@ const getAllMentors = async (req, res) => {
         const mentors = await Mentor.find(); 
 
            if (mentors.length === 0) {
-            return res.status(404).json({ message: 'No mentors found' });
+            return res.status(404).json({ success: false, message: 'No mentors found' });
         }
-        console.log(mentors,'ddddddddddddddddd');
+        // console.log(mentors,'ddddddddddddddddd');
 
-        return res.status(200).json(mentors);
+        return res.status(200).json({success:true, message:'Mentors fetched successfully',data:mentors});
     } catch (error) {
         console.error('Error while fetching mentors:', error);
-        return res.status(500).json('Error while fetching mentors');
+        return res.status(500).json({success:false, error:'Error while fetching mentors'});
     }
 };
+
+
+//       Get SalesReport
+
+const getSalesReport = async (req,res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        // Assuming User model has a 'createdAt' field for sorting
+        const salesReports = await User.find()
+            .skip(skip)
+            .limit(limit)
+            .sort('-createdAt');
+
+        return res.status(200).json({success:true, data:salesReports });
+    } catch (error) {
+        console.error("Error fetching sales reports:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+}
 
 
 
@@ -707,5 +729,6 @@ module.exports = {
     addVideo,editVideo,deleteVideo,getAllVideos,
     addAudio,editAudio,deleteAudio,getAllAudios,
     addUser,editUser,deleteUser,getAllUsers,filterUsers,searchUsers,
-    addMentor,editMentor,deleteMentor,getAllMentors
+    addMentor,editMentor,deleteMentor,getAllMentors,
+    getSalesReport
   };
