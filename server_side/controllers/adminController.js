@@ -8,6 +8,7 @@ const User = require('../models/User')
 const Mentor = require('../models/Mentor')
 const moment = require('moment-timezone');
 const {generateToken,invalidateToken} = require('../utils/adminAuth');
+const paginate = require('../helpers/pagination');
 
 //           USER LOGIN
 
@@ -151,7 +152,8 @@ const editBanner = async (req, res) => {
 
 const deleteBanner = async (req, res) => {
     // console.log('Deleting banner...');
-    const bannerId = req.query._id;
+    const { bannerId } = req.query; 
+    // const bannerId = req.query._id;
     try {
 
         // Check if banner exists
@@ -180,10 +182,10 @@ const getAllBanners = async (req, res) => {
         const banners = await Banner.find(); 
 
            if (banners.length === 0) {
-            return res.status(404).json({ message: 'No banners found' });
+            return res.status(404).json({success:false, message: 'No banners found' });
         }
 
-        return res.status(200).json({success:false,message: 'Banners fetched successfully', data:banners});
+        return res.status(200).json({success:true,message: 'Banners fetched successfully', data:banners});
     } catch (error) {
         console.error('Error while fetching banners:', error);
         return res.status(500).json('Error while fetching banners');
@@ -194,6 +196,7 @@ const getAllBanners = async (req, res) => {
 //      ADD VIDEO
 
 const addVideo = async(req,res) => {
+    console.log(req.body);
     const {video_path,heading,description} = req.body
 
     if(!video_path || !heading || !description){
@@ -257,8 +260,10 @@ const editVideo = async (req, res) => {
 //      DELETE VIDEO
 
 const deleteVideo = async (req, res) => {
-    // console.log('Deleting video...');
-    const videoId = req.query._id;
+    console.log('Deleting video...');
+    const { videoId } = req.query; 
+    // const {videoId} = req.params;
+    console.log(videoId);
     try {
 
         // Check if video exists
@@ -275,7 +280,7 @@ const deleteVideo = async (req, res) => {
 
     } catch (error) {
         console.error("Error while deleting video:", error);
-        res.status(500).json({ success: false, error: "Error while deleting video" });
+        return res.status(500).json({ success: false, error: "Error while deleting video" });
     }
 };
 
@@ -290,7 +295,7 @@ const getAllVideos = async (req, res) => {
             return res.status(404).json({success:false, message: 'No videos found' });
         }
 
-        return res.status(200).json({success:true,message: 'Videos fetched successfully',data:videos});
+        return res.status(200).json({success:true,message: 'Audios fetched successfully', data: videos });
     } catch (error) {
         console.error('Error while fetching videos:', error);
         return res.status(500).json({success:false, error:'Error while fetching videos'});
@@ -367,7 +372,8 @@ const editAudio = async (req, res) => {
 
 const deleteAudio = async (req, res) => {
     // console.log('Deleting audio...');
-    const audioId = req.query._id;
+    console.log(req.query);
+    const {audioId} = req.query;
     try {
 
         // Check if audio exists
@@ -609,6 +615,7 @@ const addMentor = async(req,res) => {
     })
 
     await newMentor.save()
+    console.log('success');
 
     return res.status(200).json({ success: true, message: 'Mentor added successfully' })
 }catch(error){
@@ -683,19 +690,41 @@ const deleteMentor = async (req, res) => {
 
 //      GET ALL Mentors
 
-const getAllMentors = async (req, res) => {
-    try {
-        const mentors = await Mentor.find(); 
+// const getAllMentors = async (req, res) => {
+//     try {
+//         const mentors = await Mentor.find(); 
 
-           if (mentors.length === 0) {
+//            if (mentors.length === 0) {
+//             return res.status(404).json({ success: false, message: 'No mentors found' });
+//         }
+        
+
+//         return res.status(200).json({success:true, message:'Mentors fetched successfully',data:mentors});
+//     } catch (error) {
+//         console.error('Error while fetching mentors:', error);
+//         return res.status(500).json({success:false, error:'Error while fetching mentors'});
+//     }
+// };
+
+
+
+
+const getAllMentors = async (req, res) => {
+    const page = parseInt(req.query.page) || 1; // Get page number from query parameters
+    const limit = 10; // Number of mentors per page
+
+    try {
+        // Use paginate helper to fetch paginated mentors
+        const result = await paginate(Mentor, page, limit, '-createdAt', {});
+
+        if (!result.success) {
             return res.status(404).json({ success: false, message: 'No mentors found' });
         }
-        // console.log(mentors,'ddddddddddddddddd');
 
-        return res.status(200).json({success:true, message:'Mentors fetched successfully',data:mentors});
+        return res.status(200).json({ success: true, message: 'Mentors fetched successfully', ...result });
     } catch (error) {
         console.error('Error while fetching mentors:', error);
-        return res.status(500).json({success:false, error:'Error while fetching mentors'});
+        return res.status(500).json({ success: false, error: 'Error while fetching mentors' });
     }
 };
 

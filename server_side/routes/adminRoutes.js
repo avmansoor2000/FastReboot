@@ -17,13 +17,13 @@ router.post('/logout',adminController.adminLogout)
 router.get('/dashboard',adminController.getDashboard);
 
 //   Post Banner
-router.post('/add_banner',adminAuth,adminController.addBanner);
+router.post('/add_banner',adminController.addBanner);
 
 //   Edit Banner
-router.put('/edit_banner',adminAuth,adminController.editBanner);
+router.put('/edit_banner',adminController.editBanner);
 
 //   Delete Banner
-router.delete('/delete_banner',adminAuth,adminController.deleteBanner);
+router.delete('/delete_banner',adminController.deleteBanner);
 
 //  Get Banners
 router.get('/get_banners',adminController.getAllBanners)

@@ -6,7 +6,8 @@ const app = express();
 const connectDB = require('./config/db');
 const {startCronJob} = require('./services/cronJob');
 require('dotenv').config
-const port = process.env.port;
+// const port = process.env.port;
+const port = process.env.PORT || 3000;
 
 // Database Connection
 connectDB()
@@ -19,12 +20,12 @@ app.use(express.json());
 
 // Enable CORS for specific origins
 app.use(cors({
-    origin: 'http://localhost:2000'
+    origin: 'http://localhost:5173'
   }));
 
   // Define routes
-app.use('/',userRoutes)
-app.use('/admin',adminRoutes)
+app.use('/api/user',userRoutes)
+app.use('/api/admin',adminRoutes)
 
 
 app.listen(port, () => {

@@ -1,8 +1,14 @@
 const {Schema,model} = require('mongoose')
 
 const BannerSchema = new Schema({
-    heading: String,
-    description: String
+    heading: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    }
 })
 
 const Banner = model('banner', BannerSchema)

@@ -1,9 +1,18 @@
 const {Schema,model} = require('mongoose')
 
 const AudioSchema = new Schema({
-    audio_path : String,
-    heading: String,
-    description: String
+    audio_path :{
+        type: String,
+        required: true
+    },
+    heading:{
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    }
 
 })
 
