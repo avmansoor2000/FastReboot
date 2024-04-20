@@ -1,4 +1,4 @@
-// const bcrypt = require('bcrypt')
+const bcrypt = require('bcrypt')
 // const jwt = require('jsonwebtoken')
 // require('dotenv').config();
 const User = require('../models/User');
@@ -13,7 +13,7 @@ const { generateToken,invalidateToken} = require('../utils/userAuth');
 const userRegister = async(req,res)=>{
     const {name,email,phone_no} = req.body
 
-    try{
+    try{ 
                                                                              
       if (!name || !email || !phone_no) {
         return res.status(400).json({ success: false, message: 'Fill all the fields.' });
@@ -51,8 +51,8 @@ const userLogin = async (req, res) => {
         }
 
         // Check if the password is correct
-        // const isPasswordValid = await bcrypt.compare(password, user.password);
-        const isPasswordValid = await password == user.password;
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        // const isPasswordValid = await password == user.password;
 
         if (!isPasswordValid) {
             return res.status(400).json({success:false, message: 'Invalid email or password' });
@@ -61,7 +61,7 @@ const userLogin = async (req, res) => {
         // Generate and send JWT token
         const token = generateToken(user._id);
         // console.log(token);
-        res.json({success:true, token });
+        return res.json({success:true, token });
 
     } catch (error) {
         console.error(error);

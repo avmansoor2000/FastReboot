@@ -1,4 +1,4 @@
-// const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 const Admin = require('../models/Admin');
 // const User = reauire('')
 const Banner = require('../models/Banners')
@@ -8,6 +8,7 @@ const User = require('../models/User')
 const Mentor = require('../models/Mentor')
 const moment = require('moment-timezone');
 const {generateToken,invalidateToken} = require('../utils/adminAuth');
+const {decryptPassword} = require('../helpers/bcrypt')
 const paginate = require('../helpers/pagination');
 
 //           USER LOGIN
@@ -428,6 +429,8 @@ const addUser = async(req,res) =>{
         // console.log(user,'ddddddddddddddddddd');
 
         if(!user){
+            const hashedPassword = await bcrypt.hash(password, 10);
+            console.log(hashedPassword);
 
             const currentDateIST = moment().tz('Asia/Kolkata').startOf('day');
             const expirationDateIST = currentDateIST.clone().add(duration, 'days').startOf('day'); 
@@ -435,14 +438,14 @@ const addUser = async(req,res) =>{
                 name,
                 number,
                 email,
-                password,
+                password : hashedPassword,
                 payment,
                 duration,
                 mentor,
                 daysRemaining : duration,
                 accessExpiresAt: expirationDateIST,
             })
-            // console.log(newUser,'ffffffffffffff');
+            console.log(newUser,'ffffffffffffff');
             await newUser.save();
 
             return res.status(200).json({success:true, message: 'successfuly registred'})
@@ -552,6 +555,14 @@ const getAllUsers = async (req, res) => {
            if (users.length === 0) {
             return res.status(404).json({success:false, message: 'No users found' });
         }
+
+        // const usersWithPasswords = users.map(user => {
+        //     return {
+        //         username: user.username,
+        //         email: user.email,
+        //         password: decryptPassword(user.password) 
+        //     };
+        // });
 
         return res.status(200).json({success:true, message: 'Users fetched successfully',data:users});
     } catch (error) {
@@ -710,8 +721,8 @@ const deleteMentor = async (req, res) => {
 
 
 const getAllMentors = async (req, res) => {
-    const page = parseInt(req.query.page) || 1; // Get page number from query parameters
-    const limit = 10; // Number of mentors per page
+    const page = parseInt(req.query.page) || 1;
+    const limit = 2; // Number of Data per page
 
     try {
         // Use paginate helper to fetch paginated mentors
